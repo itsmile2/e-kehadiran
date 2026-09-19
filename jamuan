@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borang Kehadiran Jamuan Penduduk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Tema Jamuan (Warna Emerald/Oren - Ceria) */
+        .header-bg {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .header-bg::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            transform: rotate(30deg); pointer-events: none;
+        }
+
+        /* Input Fokus Animasi */
+        .input-field { transition: all 0.2s ease; }
+        .input-field:focus { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px;}
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Modal Animasi */
+        .scale-in { animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Confetti (Untuk Cabutan Bertuah) */
+        .confetti-piece { position: absolute; width: 10px; height: 30px; background: #ffd300; top: 0; opacity: 0; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col items-center pt-0 sm:pt-6 bg-slate-50">
+
+    <header class="w-full max-w-md md:max-w-xl mx-auto z-10">
+        <div class="header-bg text-white sm:rounded-t-3xl py-8 px-6 flex flex-col items-center justify-center shadow-lg relative">
+            <div class="bg-white/20 p-3 rounded-2xl mb-4 backdrop-blur-md shadow-inner">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-center drop-shadow-md">E-Kehadiran Jamuan</h1>
+            <h2 class="text-sm sm:text-base font-medium text-emerald-50/90 text-center mt-1">Persatuan Penduduk Taman Arowana</h2>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-md md:max-w-xl mx-auto pb-12 flex flex-col relative" id="app-container">
+        <!-- Borang akan dijana di sini -->
+    </main>
+
+    <div id="toast" class="fixed top-4 right-4 z-50 transform transition-all duration-300 translate-y-20 opacity-0 bg-red-500 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center max-w-[90%] sm:max-w-md">
+        <svg id="toast-icon" class="w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span id="toast-message" class="font-medium text-sm leading-tight"></span>
+    </div>
+
+    <div id="success-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center scale-in shadow-2xl">
+            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-emerald-100 mb-6 shadow-inner relative overflow-hidden">
+                <svg class="h-12 w-12 text-emerald-600 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">Pendaftaran Berjaya!</h3>
+            <p class="text-slate-500 mb-8 font-medium text-sm">Terima kasih kerana sudi hadir memeriahkan majlis. Selamat menjamu selera!</p>
+            <button onclick="window.resetForm()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-2xl transition-all shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center">
+                Seterusnya (Tetamu Baru)
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/80 backdrop-blur-md px-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full text-center scale-in shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center">
+                    <svg class="w-7 h-7 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Pusat Kawalan Majlis
+                </h3>
+                <button onclick="window.closeAdmin()" class="text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+
+            <!-- Login Admin -->
+            <div id="admin-login-section" class="py-10">
+                <p class="text-slate-500 mb-4 text-sm font-medium">Sila masukkan PIN Admin untuk melihat rekod tetamu.</p>
+                <input type="password" id="admin-pin" class="w-full max-w-xs mx-auto block px-5 py-4 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none mb-6 text-center tracking-[0.5em] text-xl font-bold bg-slate-50" placeholder="••••••">
+                <button onclick="window.verifyAdmin()" class="w-full max-w-xs bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-4 rounded-2xl transition-all shadow-lg">Masuk</button>
+            </div>
+
+            <!-- Dashboard Admin -->
+            <div id="admin-dashboard-section" class="hidden flex-col h-full overflow-hidden">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-left">
+                        <p class="text-emerald-800 text-xs font-bold uppercase tracking-wider mb-1">Jumlah Keluarga</p>
+                        <p class="text-3xl font-black text-emerald-600" id="stat-keluarga">0</p>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-left">
+                        <p class="text-blue-800 text-xs font-bold uppercase tracking-wider mb-1">Jumlah Tetamu (Pax)</p>
+                        <p class="text-3xl font-black text-blue-600" id="stat-tetamu">0</p>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 mb-4 shrink-0">
+                    <button onclick="window.startLuckyDraw()" class="flex-1 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center text-sm">
+                        <span class="text-lg mr-2">🎁</span> Cabutan Bertuah
+                    </button>
+                    <button onclick="window.printReport()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl shadow-sm border border-slate-200 transition-all flex items-center justify-center text-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak Senarai
+                    </button>
+                </div>
+
+                <!-- Senarai Tetamu -->
+                <div class="flex-grow overflow-y-auto bg-slate-50 border border-slate-200 rounded-2xl p-2 mt-2 text-left">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-200/60 text-slate-600 sticky top-0">
+                            <tr>
+                                <th class="py-3 px-4 rounded-l-xl font-semibold">Nama / Rumah</th>
+                                <th class="py-3 px-4 font-semibold text-center">Hadiran</th>
+                                <th class="py-3 px-4 rounded-r-xl font-semibold text-right">Masa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendee-list" class="divide-y divide-slate-100">
+                            <!-- Data senarai dipapar sini -->
+                        </tbody>
+                    </table>
+                    <div id="loading-list" class="text-center py-10 hidden">
+                        <svg class="animate-spin h-6 w-6 mx-auto text-emerald-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cabutan Bertuah Modal (Dalam Admin) -->
+            <div id="lucky-draw-section" class="hidden flex-col items-center justify-center h-full min-h-[300px]">
+                <h4 class="text-2xl font-black text-orange-500 mb-6 drop-shadow-sm">🎁 Cabutan Bertuah 🎁</h4>
+                <div id="lucky-name" class="text-4xl font-extrabold text-slate-800 mb-2 h-12 flex items-center justify-center">???</div>
+                <div id="lucky-house" class="text-lg font-semibold text-slate-500 mb-10 h-6">Sedia untuk diundi...</div>
+                
+                <div class="flex space-x-3 w-full max-w-xs">
+                    <button onclick="window.backToDashboard()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-4 rounded-xl transition-all">Kembali</button>
+                    <button id="btn-spin" onclick="window.spinLuckyDraw()" class="flex-[2] bg-orange-500 hover:bg-orange-600 text-white font-black py-3 px-4 rounded-xl shadow-lg transition-all">Mula Pusing!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // =========================================================================
+        // FIREBASE CONFIG (Guna config yang sama dengan E-Undi)
+        // =========================================================================
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyDTM0URF_R2a7ADAlPobjCh7Xoa-q4XIHw",
+            authDomain: "mengundian-taman-arowanan.firebaseapp.com",
+            databaseURL: "https://mengundian-taman-arowanan-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mengundian-taman-arowanan",
+            storageBucket: "mengundian-taman-arowanan.firebasestorage.app",
+            messagingSenderId: "194812386732",
+            appId: "1:194812386732:web:0b3fd13d3d802657d4ae09"
+        };
+        // =========================================================================
+
+        let app, auth, db;
+        let isDemoMode = false;
+        let attendeesData = []; // Untuk simpan data admin & cabutan bertuah
+
+        async function init() {
+            if (myFirebaseConfig.apiKey === "SILA_MASUKKAN_API_KEY_ANDA") {
+                isDemoMode = true;
+            }
+            
+            try {
+                app = initializeApp(myFirebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                await signInAnonymously(auth);
+                renderForm();
+            } catch (error) {
+                console.error("Firebase Init Error:", error);
+                renderForm(); // Teruskan render UI walaupun ralat (fallback mod demo)
+                isDemoMode = true;
+            }
+        }
+
+        function renderForm() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = `
+                <div class="bg-white p-6 sm:p-8 rounded-b-3xl shadow-xl w-full mx-auto fade-in border border-slate-100">
+                    <div class="text-center mb-8">
+                        <h2 class="text-xl font-bold text-slate-800">Sila Daftar Kehadiran Anda</h2>
+                        <p class="text-slate-500 text-sm mt-1">Satu keluarga hanya perlu wakilkan 1 nama sahaja.</p>
+                    </div>
+                    
+                    <form id="attendanceForm" class="space-y-5">
+                        <!-- Nama -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Nama Penuh Wakil</label>
+                            <input type="text" id="attName" required class="input-field w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder-slate-400 font-medium text-slate-800" placeholder="Cth: Ali bin Abu">
+                        </div>
+                        
+                        <!-- Lokasi Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Nama Jalan</label>
+                                <select id="attStreet" required class="input-field w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all font-medium text-slate-800 appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem top 50%; background-size: 0.65rem auto;">
+                                    <option value="" disabled selected>Pilih Jalan</option>
+                                    <option value="Jalan Arowana">Jalan Arowana</option>
+                                    <option value="Jalan Arowana Emas">Jalan Arowana Emas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">No. Lorong</label>
+                                <input type="text" id="attLane" required class="input-field w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder-slate-400 font-medium text-slate-800" placeholder="Cth: 1A, 2">
+                            </div>
+                        </div>
+
+                        <!-- Rumah & Pax -->
+                        <div class="grid grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">No. Rumah</label>
+                                <input type="number" min="1" id="attHouse" required class="input-field w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder-slate-400 font-medium text-slate-800" placeholder="Cth: 1190">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1 flex items-center text-emerald-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    Bil. Hadir (Pax)
+                                </label>
+                                <input type="number" min="1" max="20" id="attPax" required class="input-field w-full px-4 py-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder-emerald-300 font-bold text-emerald-800 text-center text-lg" placeholder="1">
+                            </div>
+                        </div>
+
+                        <!-- Telefon -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Nombor Telefon</label>
+                            <input type="tel" id="attPhone" required class="input-field w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder-slate-400 font-medium text-slate-800" placeholder="Cth: 0123456789">
+                        </div>
+
+                        <button type="submit" id="btn-submit-att" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-4 rounded-2xl transition-all shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center mt-8 text-lg">
+                            <span>Sahkan Kehadiran</span>
+                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+                        
+                        <!-- Ruang Admin -->
+                        <div class="pt-6 text-center border-t border-slate-100 mt-6">
+                            <button type="button" onclick="window.openAdmin()" class="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                Tetapan Admin
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.getElementById('attendanceForm').addEventListener('submit', handleSubmission);
+        }
+
+        async function handleSubmission(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('attName').value.trim();
+            const street = document.getElementById('attStreet').value;
+            const lane = document.getElementById('attLane').value.trim();
+            const house = document.getElementById('attHouse').value.trim();
+            const pax = parseInt(document.getElementById('attPax').value);
+            const phone = document.getElementById('attPhone').value.trim();
+
+            // Validasi Rumah
+            const num = parseInt(house, 10);
+            if (street === "Jalan Arowana" && (num < 1 || num > 1440)) {
+                showToast("Nombor Rumah Jalan Arowana mestilah 1 hingga 1440.", "error"); return;
+            } else if (street === "Jalan Arowana Emas" && (num < 1 || num > 246)) {
+                showToast("Nombor Rumah Jalan Arowana Emas mestilah 1 hingga 246.", "error"); return;
+            }
+
+            const btn = document.getElementById('btn-submit-att');
+            const oriText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Merekod...`;
+
+            try {
+                if (isDemoMode) {
+                    await new Promise(r => setTimeout(r, 800)); // Simulasi
+                    attendeesData.push({ name, street, lane, house, pax, phone, timestamp: new Date() });
+                } else {
+                    await addDoc(collection(db, "kehadiran_jamuan"), {
+                        name: name, street: street, lane: lane, house: house, pax: pax, phone: phone,
+                        timestamp: serverTimestamp()
+                    });
+                }
+                
+                document.getElementById('success-modal').classList.remove('hidden');
+                document.getElementById('success-modal').classList.add('flex');
+                btn.innerHTML = oriText;
+                btn.disabled = false;
+                
+            } catch (error) {
+                console.error("Submit error:", error);
+                showToast("Ralat menyambung ke pangkalan data.", "error");
+                btn.disabled = false;
+                btn.innerHTML = oriText;
+            }
+        }
+
+        window.resetForm = function() {
+            document.getElementById('success-modal').classList.add('hidden');
+            document.getElementById('success-modal').classList.remove('flex');
+            document.getElementById('attendanceForm').reset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.openAdmin = function() {
+            document.getElementById('admin-pin').value = '';
+            document.getElementById('admin-login-section').classList.remove('hidden');
+            document.getElementById('admin-dashboard-section').classList.add('hidden');
+            document.getElementById('lucky-draw-section').classList.add('hidden');
+            
+            const modal = document.getElementById('admin-modal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+
+        window.closeAdmin = function() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('admin-modal').classList.remove('flex');
+            if(window.unsubscribeAdmin) window.unsubscribeAdmin(); // Stop listening
+        };
+
+        window.verifyAdmin = function() {
+            if(document.getElementById('admin-pin').value === "428610") {
+                document.getElementById('admin-login-section').classList.add('hidden');
+                document.getElementById('admin-dashboard-section').classList.remove('hidden');
+                document.getElementById('admin-dashboard-section').classList.add('flex');
+                loadAdminData();
+            } else {
+                showToast("PIN tidak sah!", "error");
+            }
+        };
+
+        function loadAdminData() {
+            const listEl = document.getElementById('attendee-list');
+            document.getElementById('loading-list').classList.remove('hidden');
+            listEl.innerHTML = '';
+
+            if (isDemoMode) {
+                document.getElementById('loading-list').classList.add('hidden');
+                updateAdminUI(attendeesData);
+            } else {
+                // Listen to live updates
+                const q = query(collection(db, "kehadiran_jamuan"), orderBy("timestamp", "desc"));
+                window.unsubscribeAdmin = onSnapshot(q, (snapshot) => {
+                    attendeesData = [];
+                    snapshot.forEach(doc => attendeesData.push(doc.data()));
+                    document.getElementById('loading-list').classList.add('hidden');
+                    updateAdminUI(attendeesData);
+                });
+            }
+        }
+
+        function updateAdminUI(data) {
+            let totalFam = data.length;
+            let totalPax = 0;
+            let html = '';
+
+            data.forEach(d => {
+                totalPax += (d.pax || 1);
+                
+                // Format masa
+                let timeStr = "-";
+                if(d.timestamp) {
+                    const dateObj = d.timestamp.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
+                    timeStr = dateObj.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                html += `
+                <tr class="hover:bg-slate-100/50 transition-colors">
+                    <td class="py-3 px-4">
+                        <p class="font-bold text-slate-800 leading-tight">${d.name}</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Rumah ${d.house}, Jalan ${d.roadNo || d.lane || '-'} (${d.street.replace('Jalan ','')})</p>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-block bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">${d.pax} Pax</span>
+                    </td>
+                    <td class="py-3 px-4 text-right text-xs text-slate-400 font-medium">${timeStr}</td>
+                </tr>`;
+            });
+
+            if(data.length === 0) { html = `<tr><td colspan="3" class="text-center py-8 text-slate-400 italic">Belum ada pendaftaran.</td></tr>`; }
+
+            document.getElementById('stat-keluarga').innerText = totalFam;
+            document.getElementById('stat-tetamu').innerText = totalPax;
+            document.getElementById('attendee-list').innerHTML = html;
+        }
+
+        let spinInterval;
+        window.startLuckyDraw = function() {
+            if(attendeesData.length === 0) { showToast("Belum ada tetamu berdaftar!", "error"); return; }
+            
+            document.getElementById('admin-dashboard-section').classList.add('hidden');
+            document.getElementById('admin-dashboard-section').classList.remove('flex');
+            
+            const luckySec = document.getElementById('lucky-draw-section');
+            luckySec.classList.remove('hidden'); luckySec.classList.add('flex');
+            
+            document.getElementById('lucky-name').innerText = "???";
+            document.getElementById('lucky-house').innerText = "Sedia untuk diundi...";
+            document.getElementById('lucky-name').classList.remove('text-emerald-600', 'scale-110');
+            document.getElementById('btn-spin').innerText = "Mula Pusing!";
+        };
+
+        window.backToDashboard = function() {
+            clearInterval(spinInterval);
+            document.getElementById('lucky-draw-section').classList.add('hidden');
+            document.getElementById('lucky-draw-section').classList.remove('flex');
+            document.getElementById('admin-dashboard-section').classList.remove('hidden');
+            document.getElementById('admin-dashboard-section').classList.add('flex');
+        };
+
+        window.spinLuckyDraw = function() {
+            const btn = document.getElementById('btn-spin');
+            if(btn.innerText === "Berhenti!") {
+                // STOP SPINNING
+                clearInterval(spinInterval);
+                const winner = attendeesData[Math.floor(Math.random() * attendeesData.length)];
+                
+                const nameEl = document.getElementById('lucky-name');
+                nameEl.innerText = winner.name;
+                nameEl.classList.add('text-emerald-600', 'scale-110', 'transition-all', 'duration-500');
+                document.getElementById('lucky-house').innerHTML = `🏠 No. ${winner.house}, Jalan ${winner.roadNo || winner.lane || '-'}<br><span class="text-sm">(${winner.street})</span>`;
+                
+                btn.innerText = "Undi Semula";
+                return;
+            }
+
+            // START SPINNING
+            btn.innerText = "Berhenti!";
+            document.getElementById('lucky-name').classList.remove('text-emerald-600', 'scale-110');
+            
+            spinInterval = setInterval(() => {
+                const randomPerson = attendeesData[Math.floor(Math.random() * attendeesData.length)];
+                document.getElementById('lucky-name').innerText = randomPerson.name;
+                document.getElementById('lucky-house').innerText = `Rumah ${randomPerson.house}`;
+            }, 80); // Laju pusingan
+        };
+
+        // Cetak
+        window.printReport = function() {
+            // Dapatkan masa cetakan semasa
+            const now = new Date();
+            const printDate = now.toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' });
+            const printTime = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+            
+            // Bina jadual bersih untuk print
+            let printContents = `
+                <div style="font-family: sans-serif; padding: 20px;">
+                    <h2 style="text-align:center; color:#059669; margin-bottom: 5px;">SENARAI KEHADIRAN JAMUAN PENDUDUK</h2>
+                    <h4 style="text-align:center; color:#475569; margin-top:0; margin-bottom: 5px;">Taman Arowana</h4>
+                    <p style="text-align:center; font-size: 13px; color: #64748b; margin-top: 0;">Tarikh Cetakan: ${printDate}, ${printTime}</p>
+                    <p style="text-align:center;"><b>Jumlah Keluarga:</b> ${attendeesData.length} &nbsp;|&nbsp; <b>Jumlah Keseluruhan Tetamu:</b> ${attendeesData.reduce((acc, curr) => acc + (curr.pax||0), 0)} orang</p>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9;">
+                                <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: left;">No.</th>
+                                <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: left;">Nama Tetamu</th>
+                                <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: left;">Alamat (Rumah/Jalan)</th>
+                                <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">No. Telefon</th>
+                                <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">Masa Daftar</th>
+                                <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">Hadir (Pax)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            attendeesData.forEach((d, i) => {
+                let checkInTime = "-";
+                if(d.timestamp) {
+                    const dateObj = d.timestamp.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
+                    checkInTime = dateObj.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+                }
+                
+                printContents += `
+                    <tr>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px;">${i+1}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px;"><b>${d.name}</b></td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px;">No. ${d.house}, Jalan ${d.roadNo || d.lane || '-'}, ${d.street}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${d.phone || '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; color: #64748b;">${checkInTime}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-weight: bold;">${d.pax}</td>
+                    </tr>
+                `;
+            });
+            printContents += `</tbody></table></div>`;
+            
+            const printWindow = window.open('', '', 'height=700,width=900');
+            printWindow.document.write('<html><head><title>Cetak Kehadiran Jamuan</title></head><body>');
+            printWindow.document.write(printContents);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            setTimeout(() => { printWindow.print(); }, 500);
+        };
+
+        // Toast Notifier
+        function showToast(msg, type="success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            toast.className = `fixed top-4 right-4 z-50 transform transition-all duration-300 translate-y-20 opacity-0 px-6 py-3 rounded-2xl shadow-xl flex items-center max-w-[90%] sm:max-w-md ${type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'}`;
+            icon.innerHTML = type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
